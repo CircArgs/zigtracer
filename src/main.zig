@@ -1,24 +1,43 @@
 const std = @import("std");
+const print = std.debug.print;
+const stdout = std.io.getStdOut().writer();
 
-pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+const IMG_WIDTH = 256;
+const IMG_HEIGHT = 256;
 
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
+fn printProgressBar(progress: u32) !void {
+    const remaining = 100 - progress;
 
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
-
-    try bw.flush(); // don't forget to flush!
+    try stdout.print("[", .{});
+    for (0..progress) |i| {
+        _ = i;
+        try stdout.print("=", .{});
+    }
+    for (0..remaining) |i| {
+        _ = i;
+        try stdout.print(" ", .{});
+    }
+    try stdout.print("] {}%\r", .{progress});
 }
 
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
+pub fn main() !void {
+    print("P3\n{} {}\n255\n", .{ IMG_WIDTH, IMG_HEIGHT });
+    var r: f64 = 0;
+    var g: f64 = 0;
+    var b: f64 = 0;
+    _ = b;
+    var progress: f32 = 0;
+    const totalPixels = IMG_WIDTH * IMG_HEIGHT;
+
+    for (0..IMG_HEIGHT) |j| {
+        try printProgressBar(@intFromFloat(progress / totalPixels));
+        for (0..IMG_WIDTH) |i| {
+            r = @as(f64, @floatFromInt(i)) / (IMG_WIDTH - 1);
+            g = @as(f64, @floatFromInt(j)) / (IMG_HEIGHT - 1);
+
+            print("{} {} {}\n", .{ @as(i64, @intFromFloat(255.999 * r)), @as(i64, @intFromFloat(255.999 * g)), @as(i64, 0) });
+
+            progress += 100;
+        }
+    }
 }
