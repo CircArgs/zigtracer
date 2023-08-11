@@ -1,7 +1,10 @@
 const std = @import("std");
-const print = std.debug.print;
+const Vec3 = @import("vec3.zig");
+const color = @import("color.zig");
+
 const stdout = std.io.getStdOut().writer();
 
+const imagefile = "image.ppm";
 const IMG_WIDTH = 256;
 const IMG_HEIGHT = 256;
 
@@ -21,22 +24,17 @@ fn printProgressBar(progress: u32) !void {
 }
 
 pub fn main() !void {
-    print("P3\n{} {}\n255\n", .{ IMG_WIDTH, IMG_HEIGHT });
-    var r: f64 = 0;
-    var g: f64 = 0;
-    var b: f64 = 0;
-    _ = b;
+    var file = try std.fs.cwd().createFile(imagefile, std.fs.File.CreateFlags{ .read = true });
+    defer file.close();
+    try file.writer().print("P3\n{} {}\n255\n", .{ IMG_WIDTH, IMG_HEIGHT });
     var progress: f32 = 0;
     const totalPixels = IMG_WIDTH * IMG_HEIGHT;
 
     for (0..IMG_HEIGHT) |j| {
         try printProgressBar(@intFromFloat(progress / totalPixels));
         for (0..IMG_WIDTH) |i| {
-            r = @as(f64, @floatFromInt(i)) / (IMG_WIDTH - 1);
-            g = @as(f64, @floatFromInt(j)) / (IMG_HEIGHT - 1);
-
-            print("{} {} {}\n", .{ @as(i64, @intFromFloat(255.999 * r)), @as(i64, @intFromFloat(255.999 * g)), @as(i64, 0) });
-
+            const pixel_color = color.Color.init(@as(f32, @floatFromInt(i)) / (IMG_WIDTH - 1), @as(f32, @floatFromInt(j)) / (IMG_HEIGHT - 1), 0.0);
+            try color.writeColor(&file, &pixel_color);
             progress += 100;
         }
     }
