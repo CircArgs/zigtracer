@@ -31,12 +31,12 @@ pub fn getZ(self: *const Self) f32 {
 
 /// Returns the result of multiplying a `Vec3` by a scalar
 pub fn scalarMultiply(self: *const Self, scalar: f32) Self {
-    return Self{ .vals = self.vals * @as(Self, @splat(scalar)) };
+    return Self{ .vals = self.vals * @Vector(3, f32){ scalar, scalar, scalar } };
 }
 
 /// Returns the result of dividing a `Vec3` by a scalar
 pub fn scalarDivide(self: *const Self, scalar: f32) Self {
-    return Self{ .vals = self.vals / @as(Self, @splat(scalar)) };
+    return Self{ .vals = self.vals / @Vector(3, f32){ scalar, scalar, scalar } };
 }
 
 /// Returns the result of adding two `Vec3`s
