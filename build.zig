@@ -24,6 +24,14 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const core = b.addModule("core", .{ .source_file = .{ .path = "src/core/init.zig" } });
+    exe.addModule("core", core);
+
+    const objects = b.addModule("objects", .{
+        .source_file = .{ .path = "src/objects/init.zig" },
+        .dependencies = &.{.{ .name = "core", .module = core }},
+    });
+    exe.addModule("objects", objects);
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
     // step when running `zig build`).
