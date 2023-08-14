@@ -1,0 +1,2 @@
+#/bin/zsh
+zig build run -Doptimize=ReleaseFast -Dcpu=apple_a14+neon
