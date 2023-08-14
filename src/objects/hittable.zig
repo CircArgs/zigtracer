@@ -9,8 +9,8 @@ pub const Hittable = union(enum) {
 
     const Self = @This();
 
-    pub fn hit(self: *const Self, ray: *const Ray) ?Hit {
-        return self.Sphere.hit(ray);
+    pub fn hit(self: *const Self, ray: *const Ray, t_min: f32, t_max: f32) ?Hit {
+        return self.Sphere.hit(ray, t_min, t_max);
         // const std = @import("std");
         // std.debug.print("{}", .{self.Sphere});
         // return switch (@TypeOf(self)) {
