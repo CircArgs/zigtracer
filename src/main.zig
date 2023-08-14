@@ -13,7 +13,7 @@ const printProgressBar = @import("utils.zig").printProgressBar;
 
 const IMAGE_FILE = "image.ppm";
 const ASPECT_RATIO: comptime_float = 16.0 / 9.0;
-const IMG_HEIGHT: comptime_int = 225;
+const IMG_HEIGHT: comptime_int = 500;
 const IMG_WIDTH: comptime_int = @floor(IMG_HEIGHT * ASPECT_RATIO);
 const IMG_ASPECT: comptime_float = @as(comptime_float, @floatFromInt(IMG_WIDTH)) / @as(comptime_float, @floatFromInt(IMG_HEIGHT));
 const VIEWPORT_HEIGHT: comptime_float = 2.0;
