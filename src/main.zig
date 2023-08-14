@@ -13,7 +13,7 @@ const printProgressBar = @import("utils.zig").printProgressBar;
 
 const IMAGE_FILE = "image.ppm";
 const ASPECT_RATIO: comptime_float = 16.0 / 9.0;
-const IMG_HEIGHT: comptime_int = 500;
+const IMG_HEIGHT: comptime_int = 100;
 const IMG_WIDTH: comptime_int = @floor(IMG_HEIGHT * ASPECT_RATIO);
 const IMG_ASPECT: comptime_float = @as(comptime_float, @floatFromInt(IMG_WIDTH)) / @as(comptime_float, @floatFromInt(IMG_HEIGHT));
 const VIEWPORT_HEIGHT: comptime_float = 2.0;
@@ -29,9 +29,12 @@ const VIEWPORT_UL = CAMERA_CENTER.add(&CAMERA_DIRECTION).subtract(&VIEWPORT_V.sc
 const PIXEL_ORIGIN = VIEWPORT_UL.add(&PIXEL_DELTA_V.add(&PIXEL_DELTA_U).scalarMultiply(0.5));
 
 fn rayColor(r: *const Ray, object: *const Hittable) color.Color {
-    if (object.hit(r) != null) {
-        return color.Color.init(1.0, 0, 0);
+    const hit = object.hit(r, 0, 1_000_000);
+    if (hit != null) {
+        // std.debug.print(" {} ", .{(hit.?).normal.norm()});
+        return (hit.?).normal.add(&Vec3.init(1, 1, 1)).scalarDivide(2);
     }
+
     const unit_direction = r.direction.normalize();
     const a = 0.5 * (unit_direction.getY() + 1);
     return (color.Color.init(1.0, 1.0, 1.0).scalarMultiply(1.0 - a)).add(&color.Color.init(0.5, 0.7, 1.0).scalarMultiply(a));
