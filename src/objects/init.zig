@@ -1,2 +1,4 @@
-pub const Hittable = @import("hittable.zig").Hittable;
+const hittable = @import("hittable.zig");
 pub const Sphere = @import("sphere.zig");
+pub const Hittable = hittable.Hittable;
+pub const HittableList = hittable.HittableList;

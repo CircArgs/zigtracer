@@ -17,22 +17,21 @@ pub fn hit(self: *const Self, r: *const Ray, t_min: f32, t_max: f32) ?Hit {
     const oc = r.origin.subtract(&self.center);
     const a = r.direction.normSquared();
     const half_b = r.direction.dot(&oc);
-    const c = oc.dot(&oc) - self.radius * self.radius;
-    const determinant = half_b * half_b - a * c;
+    const c = oc.normSquared() - self.radius * self.radius;
 
-    if (determinant < 0.0) {
+    const discriminant = half_b * half_b - a * c;
+
+    if (discriminant < 0)
         return null;
-    }
-    const root = std.math.sqrt(determinant);
-    var t = (-half_b + root) / a;
-    if (t < t_min or t > t_max) {
-        t = (-half_b - root) / a;
-    } else {
-        if (t < t_min or t > t_max) {
+    const sqrtd = std.math.sqrt(discriminant);
+
+    var t = (-half_b - sqrtd) / a;
+    if (t < t_min or t_max < t) {
+        t = (-half_b + sqrtd) / a;
+        if (t < t_min or t_max < t)
             return null;
-        }
     }
     const p = r.direction.scalarMultiply(t).add(&r.origin);
     const normal = p.subtract(&self.center).scalarDivide(self.radius);
-    return Hit.init(p, normal);
+    return Hit.init(p, normal, t);
 }

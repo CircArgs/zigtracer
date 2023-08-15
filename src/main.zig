@@ -8,6 +8,7 @@ const color = core.color;
 const objects = @import("objects");
 const Hittable = objects.Hittable;
 const Sphere = objects.Sphere;
+const HittableList = objects.HittableList;
 
 const printProgressBar = @import("utils.zig").printProgressBar;
 
@@ -26,10 +27,11 @@ const PIXEL_DELTA_U = VIEWPORT_U.scalarDivide(IMG_WIDTH);
 const PIXEL_DELTA_V = VIEWPORT_V.scalarDivide(IMG_HEIGHT);
 const CAMERA_DIRECTION = VIEWPORT_U.cross(&VIEWPORT_V).normalize().scalarMultiply(FOCAL_LENGTH);
 const VIEWPORT_UL = CAMERA_CENTER.add(&CAMERA_DIRECTION).subtract(&VIEWPORT_V.scalarMultiply(0.5)).subtract(&VIEWPORT_U.scalarMultiply(0.5));
+// const VIEWPORT_UL = CAMERA_CENTER.subtract(&Vec3.init(0, 0, FOCAL_LENGTH)).subtract(&VIEWPORT_U.scalarDivide(2)).subtract(&VIEWPORT_V.scalarDivide(2));
 const PIXEL_ORIGIN = VIEWPORT_UL.add(&PIXEL_DELTA_V.add(&PIXEL_DELTA_U).scalarMultiply(0.5));
 
-fn rayColor(r: *const Ray, object: *const Hittable) color.Color {
-    const hit = object.hit(r, 0, 1_000_000);
+fn rayColor(r: *const Ray, world: *const HittableList) color.Color {
+    const hit = world.hit(r, 0, std.math.inf(f32));
     if (hit != null) {
         // std.debug.print(" {} ", .{(hit.?).normal.norm()});
         return (hit.?).normal.add(&Vec3.init(1, 1, 1)).scalarDivide(2);
@@ -41,23 +43,29 @@ fn rayColor(r: *const Ray, object: *const Hittable) color.Color {
 }
 
 pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
+
     var file = try std.fs.cwd().createFile(IMAGE_FILE, std.fs.File.CreateFlags{ .read = true });
     defer file.close();
     try file.writer().print("P3\n{} {}\n255\n", .{ IMG_WIDTH, IMG_HEIGHT });
     var progress: f32 = 0;
     const total_pixels = IMG_WIDTH * IMG_HEIGHT;
 
-    const world = [1]Hittable{Hittable.sphere(Point3.init(0, 0, -1), 0.5)};
+    var world = HittableList.init(allocator);
+    defer world.deinit();
+    try world.add(Hittable.sphere(Point3.init(0, 0, -1), 0.5));
+    try world.add(Hittable.sphere(Point3.init(0, -100.5, -1), 100));
 
     for (0..IMG_HEIGHT) |j| {
         try printProgressBar(@intFromFloat(progress / total_pixels));
         for (0..IMG_WIDTH) |i| {
             const pixel_loc = PIXEL_ORIGIN.add(&PIXEL_DELTA_V.scalarMultiply(@as(f32, @floatFromInt(j))).add(&PIXEL_DELTA_U.scalarMultiply(@as(f32, @floatFromInt(i)))));
             const ray_direction = pixel_loc.subtract(&CAMERA_CENTER);
-            for (world) |object| {
-                const pixel_color = rayColor(&Ray.init(CAMERA_CENTER, ray_direction), &object);
-                try color.writeColor(&file, &pixel_color);
-            }
+            const pixel_color = rayColor(&Ray.init(CAMERA_CENTER, ray_direction), &world);
+            try color.writeColor(&file, &pixel_color);
+
             progress += 100;
         }
     }
