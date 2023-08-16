@@ -23,8 +23,12 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    const utils = b.addModule("utils", .{ .source_file = .{ .path = "src/utils.zig" } });
+    exe.addModule("utils", utils);
 
-    const core = b.addModule("core", .{ .source_file = .{ .path = "src/core/init.zig" } });
+    const core = b.addModule("core", .{
+        .source_file = .{ .path = "src/core/init.zig" },
+    });
     exe.addModule("core", core);
 
     const objects = b.addModule("objects", .{
