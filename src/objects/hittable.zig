@@ -5,14 +5,15 @@ const Sphere = @import("sphere.zig");
 const Ray = core.Ray;
 const Hit = core.Hit;
 const Point3 = core.Point3;
+const Interval = core.Interval;
 
 pub const Hittable = union(enum) {
     Sphere: Sphere,
 
     const Self = @This();
 
-    pub fn hit(self: *const Self, ray: *const Ray, t_min: f32, t_max: f32) ?Hit {
-        return self.Sphere.hit(ray, t_min, t_max);
+    pub fn hit(self: *const Self, ray: *const Ray, interval: *const Interval) ?Hit {
+        return self.Sphere.hit(ray, interval);
         // const std = @import("std");
         // std.debug.print("{}", .{self.Sphere});
         // return switch (@TypeOf(self)) {
@@ -37,17 +38,18 @@ pub const HittableList = struct {
     pub fn deinit(self: *Self) void {
         self.list.deinit();
     }
-    pub fn hit(self: *const Self, r: *const Ray, t_min: f32, t_max: f32) ?Hit {
+    pub fn hit(self: *const Self, r: *const Ray, interval: *Interval) ?Hit {
         var hit_: ?Hit = null;
         var temp_hit: ?Hit = null;
         for (self.list.items) |object| {
-            temp_hit = object.hit(r, t_min, t_max);
+            temp_hit = object.hit(r, interval);
             if (hit_ == null) {
                 hit_ = temp_hit;
             } else {
                 if (temp_hit != null) {
                     if (temp_hit.?.t < hit_.?.t) {
                         hit_ = temp_hit;
+                        interval.max = hit_.?.t;
                     }
                 }
             }

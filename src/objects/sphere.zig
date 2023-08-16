@@ -4,6 +4,7 @@ const Ray = core.Ray;
 const Hit = core.Hit;
 const Point3 = core.Point3;
 const Vec3 = core.Vec3;
+const Interval = core.Interval;
 
 const Self = @This();
 center: Point3,
@@ -13,7 +14,7 @@ pub fn init(center: Point3, radius: f32) Self {
     return Self{ .center = center, .radius = radius };
 }
 
-pub fn hit(self: *const Self, r: *const Ray, t_min: f32, t_max: f32) ?Hit {
+pub fn hit(self: *const Self, r: *const Ray, interval: *const Interval) ?Hit {
     const oc = r.origin.subtract(&self.center);
     const a = r.direction.normSquared();
     const half_b = r.direction.dot(&oc);
@@ -26,9 +27,9 @@ pub fn hit(self: *const Self, r: *const Ray, t_min: f32, t_max: f32) ?Hit {
     const sqrtd = std.math.sqrt(discriminant);
 
     var t = (-half_b - sqrtd) / a;
-    if (t < t_min or t_max < t) {
+    if (!interval.contains(t)) {
         t = (-half_b + sqrtd) / a;
-        if (t < t_min or t_max < t)
+        if (!interval.contains(t))
             return null;
     }
     const p = r.direction.scalarMultiply(t).add(&r.origin);

@@ -9,6 +9,7 @@ const objects = @import("objects");
 const Hittable = objects.Hittable;
 const Sphere = objects.Sphere;
 const HittableList = objects.HittableList;
+const Interval = core.Interval;
 
 const printProgressBar = @import("utils.zig").printProgressBar;
 
@@ -31,9 +32,9 @@ const VIEWPORT_UL = CAMERA_CENTER.add(&CAMERA_DIRECTION).subtract(&VIEWPORT_V.sc
 const PIXEL_ORIGIN = VIEWPORT_UL.add(&PIXEL_DELTA_V.add(&PIXEL_DELTA_U).scalarMultiply(0.5));
 
 fn rayColor(r: *const Ray, world: *const HittableList) color.Color {
-    const hit = world.hit(r, 0, std.math.inf(f32));
+    var interval = Interval.default();
+    const hit = world.hit(r, &interval);
     if (hit != null) {
-        // std.debug.print(" {} ", .{(hit.?).normal.norm()});
         return (hit.?).normal.add(&Vec3.init(1, 1, 1)).scalarDivide(2);
     }
 
