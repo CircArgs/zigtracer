@@ -15,3 +15,13 @@ pub fn printProgressBar(progress: u32) !void {
     }
     try stdout.print("] {}%\r", .{progress});
 }
+
+const RndGen = std.rand.DefaultPrng;
+
+pub fn random_f32(rng: *std.rand.DefaultPrng) f32 {
+    // Returns a random real in [0,1).
+    return rng.random().float(f32);
+}
+pub fn random_f32_range(rng: *std.rand.DefaultPrng, min: f32, max: f32) f32 {
+    return min + random_f32(rng) * (max - min);
+}

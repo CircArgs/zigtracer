@@ -14,11 +14,8 @@ pub const Hittable = union(enum) {
 
     pub fn hit(self: *const Self, ray: *const Ray, interval: *const Interval) ?Hit {
         return self.Sphere.hit(ray, interval);
-        // const std = @import("std");
-        // std.debug.print("{}", .{self.Sphere});
-        // return switch (@TypeOf(self)) {
-        //     Sphere => |s| s.Sphere.hit(ray),
-        //     else => null,
+        // return switch (self) {
+        //     inline else => |case| case.hit(ray, interval),
         // };
     }
 
