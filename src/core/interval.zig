@@ -28,3 +28,7 @@ pub fn contains(self: *const Self, x: f32) bool {
 pub fn surrounds(self: *const Self, x: f32) bool {
     return self.min < x and x < self.max;
 }
+
+pub fn clamp(self: *const Self, x: f32) f32 {
+    return @min(@max(x, self.min), self.max);
+}

@@ -14,22 +14,35 @@ const Self = @This();
 
 aspect_ratio: f32,
 image_width: u32,
+samples_per_pixel: u32,
 
-pub fn init(aspect_ratio: f32, image_width: u32) Self {
-    return Self{ .aspect_ratio = aspect_ratio, .image_width = image_width };
+pub fn init(aspect_ratio: f32, image_width: u32, samples_per_pixel: u32) Self {
+    return Self{ .aspect_ratio = aspect_ratio, .image_width = image_width, .samples_per_pixel = samples_per_pixel };
+}
+
+fn get_ray(settings: *const CameraSettings, i: f32, j: f32) Ray {
+    const pixel_loc = settings.pixel_origin.add(&settings.pixel_delta_v.scalarMultiply(j)).add(&settings.pixel_delta_u.scalarMultiply(i));
+    const ray_direction = pixel_loc.subtract(&settings.center);
+    return Ray.init(settings.center, ray_direction);
 }
 
 pub fn render(self: *const Self, world: *const objects.HittableList, stream: *const std.fs.File) !void {
-    const settings = CameraSettings.init(self.aspect_ratio, self.image_width);
+    var settings = CameraSettings.init(self.aspect_ratio, self.image_width);
     try stream.writer().print("P3\n{} {}\n255\n", .{ settings.image_width, settings.image_height });
     var progress: f32 = 0;
     const total_pixels = @as(f32, @floatFromInt(settings.image_width * settings.image_height));
     for (0..settings.image_height) |j| {
         try utils.printProgressBar(@intFromFloat(progress / total_pixels));
         for (0..settings.image_width) |i| {
-            const pixel_loc = settings.pixel_origin.add(&settings.pixel_delta_v.scalarMultiply(@as(f32, @floatFromInt(j))).add(&settings.pixel_delta_u.scalarMultiply(@as(f32, @floatFromInt(i)))));
-            const ray_direction = pixel_loc.subtract(&settings.center);
-            const pixel_color = rayColor(&Ray.init(settings.center, ray_direction), world);
+            var pixel_color = color.Color.init(0, 0, 0);
+            for (0..self.samples_per_pixel) |_| {
+                const rnd_i = utils.random_f32_range(&settings.rng, -0.5, 0.5);
+                const rnd_j = utils.random_f32_range(&settings.rng, -0.5, 0.5);
+                const this_ray = get_ray(&settings, rnd_i + @as(f32, @floatFromInt(i)), rnd_j + @as(f32, @floatFromInt(j)));
+                const this_color = rayColor(&this_ray, world);
+                pixel_color = pixel_color.add(&this_color);
+            }
+            pixel_color = pixel_color.scalarDivide(@as(f32, @floatFromInt(self.samples_per_pixel)));
             try color.writeColor(stream, &pixel_color);
 
             progress += 100;
@@ -57,6 +70,7 @@ const CameraSettings = struct {
     pixel_origin: Vec3,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
+    rng: std.rand.DefaultPrng,
 
     pub fn init(aspect_ratio: f32, image_width: u32) CameraSettings {
         const image_width_ = @as(f32, @floatFromInt(image_width));
@@ -82,7 +96,8 @@ const CameraSettings = struct {
         // Calculate the location of the upper left pixel.
         const viewport_upper_left = center.subtract(&Vec3.init(0, 0, FOCAL_LENGTH)).subtract(&viewport_u.scalarDivide(2)).subtract(&viewport_v.scalarDivide(2));
         const pixel_origin = viewport_upper_left.add(&pixel_delta_u.scalarMultiply(0.5)).add(&pixel_delta_v.scalarMultiply(0.5));
-
-        return CameraSettings{ .aspect_ratio = aspect_ratio, .image_width = image_width, .image_height = image_height, .center = center, .pixel_origin = pixel_origin, .pixel_delta_u = pixel_delta_u, .pixel_delta_v = pixel_delta_v };
+        const seed = @as(u64, @truncate(@as(u128, @bitCast(std.time.nanoTimestamp()))));
+        var prng = std.rand.DefaultPrng.init(seed);
+        return CameraSettings{ .aspect_ratio = aspect_ratio, .image_width = image_width, .image_height = image_height, .center = center, .pixel_origin = pixel_origin, .pixel_delta_u = pixel_delta_u, .pixel_delta_v = pixel_delta_v, .rng = prng };
     }
 };
